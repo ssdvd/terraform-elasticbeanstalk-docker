@@ -1,0 +1,42 @@
+Repositorio:
+
+para criar um Repositorio dentro da AWS, podemos utilizar o padrao de uso
+disponibilizado na doc do terraform, seguindo o seguinte cod:
+
+resource "aws_ecr_repository" "repositorio" {
+  name = var.nome
+}
+
+somente com esse trecho de cod dentro de um arquivo chamado ecr.tf, ja e o 
+suficiente para criar um repo, pois so tem o atributo name como obrigatorio,
+e ja nesse arq iremos comecar a utilizar as variaveis.
+
+Com isso ja podemos criar nosso arquivo para as variaveis, chamado variaveis.tf
+e inseremos a variavel nome, com o seguinte cod:
+
+variable "nome" {
+  type = string
+}
+
+especificando o nome e o tipo da mesma.
+
+Aplicacao:
+
+iremos utilizar uma api que foi disponibilizado no curso, e realizando um git clone
+do repo, e dentro do mesmo repo podemos iniciar um Dockerfile com o seguinte cod
+que foi tirado diretamente dos exemplos do proprio docker:
+
+FROM python:3
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /home/ubuntu/tcc
+
+COPY . /home/ubuntu/tcc/
+
+aqui ira iniciar um container com python com pelo menos a versao 3, criando duas
+variaveis de ambiente, uma para melhorar o perfomance e a outra para jogar toda
+a saida do python direto para nosso console, iremos definir o nosso diretorio
+de trabalho com o WORKDIR e em seguida iremos copiar nossa aplicacao que foi clonada
+para dentro do container. 

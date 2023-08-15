@@ -1,0 +1,61 @@
+Provedores:
+
+Primeiramente utilizamos o tutorial disponivel no site do terraform para iniciar
+o nosso arquivo provider.tf, onde iremos inserer os dados do nosso Provedor
+que no caso e a AWS, e ficara assim:
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
+
+  required_version = ">= 1.2.0"
+}
+
+provider "aws" {
+  profile = "default"
+  region = "us-east-2"
+}
+
+
+com isso, informamos com qual versao, perfil e regiao queremos trabalhar.
+
+Estado distribuido:
+
+para termos um estado distribuido, onde as pessoas que irao trabalhar conosco
+possam ver o estado atual do terraform, devemos criar um bucket no s3 para 
+armazenar o estado, e apos a criacao desse bucket, devemos criar um arquivo chamado
+backend.tf, informando o seguinte cod:
+
+terraform {
+  backend "s3" {
+    bucket = "state-terraform-elasticbeanstalk-docker"
+    key    = "prod/terraform.tfstate"
+    region = "us-east-2"
+  }
+}
+
+nesse bloco de cod, informamos que queremos armazenar o estado do terraform
+dentro do bucket, no caminho que e passo atraves da key, informamos em qual pasta
+sera armazenado, e tambem dizemos a regiao em que o nosso bucket estara. Isso tambem
+facilitara a implementacao de rotinas de CD.
+
+Nesta aula vimos:
+A separação de pastas e os motivos que fazemos essa separação, tornando o 
+código mais fácil de se entender e modificar futuramente;
+
+Onde podemos encontrar as informações de provedores, sempre olhando a
+documentação, pois ela é nossa amiga;
+
+As vantagens de termos estados distribuídos, onde colocamos os arquivos 
+de estado no cloud para podermos usar de qualquer lugar;
+
+Como criamos estados distribuídos no Terraform, usando o backend e 
+configurando ele de acordo com a documentação.
+
+
+
+
