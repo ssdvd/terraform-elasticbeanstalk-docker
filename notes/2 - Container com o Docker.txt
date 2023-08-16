@@ -40,3 +40,35 @@ variaveis de ambiente, uma para melhorar o perfomance e a outra para jogar toda
 a saida do python direto para nosso console, iremos definir o nosso diretorio
 de trabalho com o WORKDIR e em seguida iremos copiar nossa aplicacao que foi clonada
 para dentro do container. 
+
+e com o bloco de cod:
+
+RUN pip install -r requirements.txt | instalando os requerimentos
+
+RUN sed -i "s/ALLOWED_HOSTS = \[\]/ALLOWED_HOSTS = \['*'\]/" setup/settings.py | Liberando acesso ao hosts
+
+RUN python manage.py migrate | migrando a estrutura do banco
+
+RUN python manage.py loaddata clientes.json | carregando os dados para o banco
+
+ENTRYPOINT python manage.py runserver 0.0.0.0:8000 | iniciando o server
+
+EXPOSE 8000 | expondo porta 8000
+
+com esses comandos, estamos instalando os requerimentos, permitindo acesso ao
+host, migrando a estrutura do banco, carregando os dados, iniciando o servidor e
+expondo a porta 8000. Feito isso no arquivo, executamos o cod:
+
+docker build . -t producao:V1
+
+para buildar a imagem com o nome producao e na versao 1.
+
+Nesta aula vimos:
+As funções dos repositórios de imagens docker, que servem para guardar as 
+imagens que criamos e disponibilizá-las publicamente ou via credenciais;
+
+Como montar uma Imagem do docker, criando o arquivo Dockerfile e colocando 
+os parâmetros necessários dentro dele;
+
+Como criar a imagem do docker, usando o Dockerfile criado e usando o docker 
+build . para criar a imagem a partir dele.
