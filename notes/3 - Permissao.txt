@@ -181,3 +181,16 @@ onde estamos criando um recurso aws_iam_instance_profile com o do recurso de
 nome beanstalk_ec2_profile e nome de perfil beanstalk-ec2-profile e atribuindo
 a role com o role = aws_iam_role.beanstalk_ec2.name.
 
+Nesta aula vimos:
+
+Os tipos de permissionamento, aditivo e completo, onde damos apenas as permissões 
+necessárias ou damos todas elas;
+
+Como criar uma role na AWS, que se assemelha a um cargo, no qual vamos dar permissões 
+para usarmos;
+
+Como adicionar as permissões, também chamadas de políticas ou polices, ao nosso 
+cargo;
+
+Como criar um perfil para que o nosso cargo possa utilizá-lo, assim podemos nos 
+referir ao cargo pelo nome do perfil.
