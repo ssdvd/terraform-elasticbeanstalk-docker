@@ -1,0 +1,66 @@
+Criando o Docker run:
+
+antes de criamos o nosso dockerrun.aws.json, devemos iniciar nosso ambiente 
+para que o nosso repo do ecr seja criado para assim podermos subir nossa imagem
+docker para nosso repo, entao com o que ja temos, podemos iniciar com o comando:
+
+terraform init
+
+com isso iremos ter iniciado nosso backend no s3 do nosso ambiente
+e em seguida iremos provisionar todo o ambiente com o comando:
+
+terraform apply 
+
+
+ambos os comandos tem que ser dado a partir da pasta do ambiente desejado,
+que no caso e o prod.
+
+e com essa parte do ambiente ja provisionada iremos realizar o login com o 
+ecr e o docker, com o seguinte comando:
+
+aws ecr get-login-password --region region | docker login --username AWS --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
+
+esse comando ira pegar nossas credenciais que ja estao no AWS CLI e ira linkar
+nosso docker local para que possamos subir nossa imagem, antes disso alteramos
+o comando para que esteja com as nossas config desejadas, entao o comando ficaria
+desse jeito:
+
+aws ecr get-login-password --region region | docker login --username AWS --password-stdin 027662851187.dkr.ecr.us-east-2.amazonaws.com
+
+feito ja podemos passar para as etapas dentro do docker, com o comando:
+
+docker images ls
+
+iremos identificar nossa imagem, qual iremos subir para o repo ecr e entao iremos
+renomear essa imagem para para o padrao aceito pelo aws com o comando:
+
+docker tag [IDIMAGE] 027662851187.dkr.ecr.us-east-2.amazonaws.com/producao:v1 
+
+assim renomeamos a imagem desejada e em seguida podemos efetuar o push para
+o nosso repo do ecr, com o comando:
+
+docker push 027662851187.dkr.ecr.us-east-2.amazonaws.com/producao:v1
+
+feito isso, ja podemos criar nosso arquivo Dockerrun.aws.json, onde ira rodar a
+nossa imagem feito pelo docker no nosso elasticbeanstalk, ira ficar com o seguinte
+cod:
+
+{
+    "Image": {
+      "Name": "027662851187.dkr.ecr.us-east-2.amazonaws.com/producao:v1"
+    },
+    "Ports": [
+      {
+        "ContainerPort": 8080,
+        "HostPort": 8000
+      }
+    ]
+  }
+
+esse bloco de cod, representa nosso docker run, onde sinalizamos qual repo e imagem
+estaremos utilizando e quando quais portas iremos utilizar, tanto a do container
+quando a do nosso host, uma observacao e que nao e obrigatorio informar a porta
+do nosso host.
+
+
+
