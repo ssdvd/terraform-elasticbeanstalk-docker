@@ -1,0 +1,75 @@
+Criando a aplicacao:
+
+antes de iniciarmos a aplicacao, vamos criar o recurso do elasticbeanstalk, pois o 
+recurso e divido em duas partes a aplicacao e o ambiente, como seguinte bloco 
+de cod conseguimos montar a aplicacao:
+
+resource "aws_elastic_beanstalk_application" "aplicacao_beanstalk" {
+  name        = var.nome
+  description = var.descricao
+
+}
+
+onde podemos ver qu estamos criando o recurso aws_elastic_beanstalk_application
+com o nome aplicacao_beanstalk, e nas chaves name e description estamos utilizando
+as nossas variaveis.
+
+Criando o ambiente:
+
+e agora partimos para a criacao do ambiente da nossa aplicacao beanstalk, com o 
+seguinte bloco de cod:
+
+resource "aws_elastic_beanstalk_environment" "ambiente_beanstalk" {
+  name                = var.ambiente
+  application         = aws_elastic_beanstalk_application.aplicacao_beanstalk.name
+  solution_stack_name = "64bit Amazon Linux 2023 v4.0.0 running Docker"
+}
+
+estamos criando um recurso aws_elastic_beanstalk_environment com o nome de ambiente_beanstalk
+na chave name estamos utilizando a variavel ambiente, chave application estamos 
+sinalizando nossa recem criada aplicacao_beanstalk e utilizando o name dela ja na
+chave solution_stack_name, estamos sinalizando que iremos utilizar a plataforma
+docker com qual o benastalk tem suporte.
+
+Melhorando o ambiente:
+
+e para isso utilizamos o seguinte bloco de cod:
+
+setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "InstanceType"
+    value     = var.maquina
+  }
+
+Aqui estamos determinado o autoscaling e o tipo de instancia que sera utilizado
+ex t2.micro
+
+  setting {
+    namespace = "aws:autoscaling:asg"
+    name      = "MaxSize"
+    value     = var.max
+  }
+
+definindo o tamanho maximo de maquinas que pode escalonar.
+
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.beanstalk_ec2_profile.name
+  }
+
+aqui e o perfil que foi criado anteriormente e tambem sera usado aqui 
+para conseguir executar todas as funcoes necessarias.
+
+os recurso que estao utilizando as variaveis, as mesmas terao que ser especificadas
+no arquivo variaveis.tf com nome e tipo.
+
+Nesta aula vimos:
+As partes necessárias para o Elastic Beanstalk, sendo elas: a aplicação 
+e o ambiente;
+
+Como montar a aplicação dentro do Terraform e quais os campos obrigatórios, 
+sendo que o nome é o único campo obrigatório, porém a descrição é recomendável;
+
+Como montar o ambiente para a aplicação, colocando todas as configurações extras 
+para definir e melhorar o nosso ambiente.
