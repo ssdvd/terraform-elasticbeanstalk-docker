@@ -25,7 +25,7 @@ nosso docker local para que possamos subir nossa imagem, antes disso alteramos
 o comando para que esteja com as nossas config desejadas, entao o comando ficaria
 desse jeito:
 
-aws ecr get-login-password --region region | docker login --username AWS --password-stdin 027662851187.dkr.ecr.us-east-2.amazonaws.com
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 027662851187.dkr.ecr.us-east-2.amazonaws.com
 
 feito ja podemos passar para as etapas dentro do docker, com o comando:
 
@@ -46,13 +46,14 @@ nossa imagem feito pelo docker no nosso elasticbeanstalk, ira ficar com o seguin
 cod:
 
 {
+    "AWSEBDockerrunVersion": "1",
     "Image": {
-      "Name": "027662851187.dkr.ecr.us-east-2.amazonaws.com/producao:v1"
+      "Name": "027662851187.dkr.ecr.us-east-2.amazonaws.com/producao:v1",
+      "Update": "true"
     },
     "Ports": [
       {
-        "ContainerPort": 8080,
-        "HostPort": 8000
+        "ContainerPort": 8080
       }
     ]
   }
@@ -62,5 +63,106 @@ estaremos utilizando e quando quais portas iremos utilizar, tanto a do container
 quando a do nosso host, uma observacao e que nao e obrigatorio informar a porta
 do nosso host.
 
+Colocando no S3:
 
+e com nosso json pronto, podemos zipar o arquivo, pois o elasticbeanstalk 
+so aceita arquivos zipados, para isso executamos o comando:
 
+zip producao.zip Dockerrun.aws.json
+
+assim zipando nosso arquivo, agora devemos criar nosso bucket para subir esse zip,
+com o seguinte bloco de cod:
+
+resource "aws_s3_bucket" "beanstalk_deploys" {
+  bucket = "${var.nome}-deploys"
+
+}
+
+estamos criando um arquivo chamado s3.tf e dentro dele um bucket com o recurso 
+aws_s3_bucket com o nome beanstalk_deploys e o bucket com a variavel nome, 
+para que possamos identificar quando necessario para podermos subir nosso zip. 
+em seguida iremos realizar o upload desse arquivo, utilizando o seguinte 
+bloco de cod:
+
+resource "aws_s3_bucket_object" "docker" {
+  depends_on = [ 
+    aws_s3_bucket.beanstalk_deploys
+   ]
+  bucket = "${var.nome}-deploys"
+  key    = "${var.nome}.zip"
+  source = "${var.nome}.zip"
+
+  # The filemd5() function is available in Terraform 0.11.12 and later
+  # For Terraform 0.11.11 and earlier, use the md5() function and the file() function:
+  # etag = "${md5(file("path/to/file"))}"
+  etag = filemd5("${var.nome}.zip")
+}
+
+com o recurso aws_s3_bucket_object de nome docker, na chave depends_on estamos informando
+que esse objeto so ira subir para o bucket se o proprio bucket ja foi criado
+antes do objeto, na chave bucket informamos o nome do bucket no qual o arquivo 
+ira subir, no key informamos o nome do arquivo que ficara depois que subir no 
+bucket, o source e o arquivo em si e ja o etag seria a crioptografia para gerar o 
+hash do arquivo, para podermos version o mesmo.
+
+Criando a versao:
+
+para criarmos a versao do nosso elasticbeanstalk, da qual serve para que se caso
+fizessemos uma att e ela desse errado, poderiamos voltar a versao sem problema
+e com esse bloco de cod iremos criar o versionamento:
+
+resource "aws_elastic_beanstalk_application_version" "default" {
+  depends_on = [ 
+    aws_elastic_beanstalk_environment.ambiente_beanstalk,
+    aws_elastic_beanstalk_application.aplicacao_beanstalk,
+    aws_s3_bucket_object.docker
+   ]
+  name        = var.ambiente
+  application = var.nome
+  description = var.descricao
+  bucket      = aws_s3_bucket.beanstalk_deploys.id
+  key         = aws_s3_object.docker.id
+}
+
+estamos criando o recurso aws_elastic_beanstalk_application_version e de nome default
+onde o mesmo vai depender que antes os seguintes itens ja estejam provisionados:
+
+aws_elastic_beanstalk_environment.ambiente_beanstalk, 
+aws_elastic_beanstalk_application.aplicacao_beanstalk,
+aws_s3_bucket_object.docker
+
+se nao ira haver conflitos por conta do terraform estar provisionando tudo ao mesmo
+tempo. Em seguida definimos o name com a variavel var.ambiente para identificarmos o
+ambiente, a application definimos com a variavel var.nome assim indificamos de qual
+aplicacao se trata, description a variavel var.descricao com o mesmo intuito da var.nome
+na chave bucket informamos o bucket que foi criado para subir o zip do nosso dockerrun
+e na chave key informamos o nosso arquivo zip para realizar o versionamento.
+
+Deploy da aplicacao:
+
+feito isso ja podemos fazer o deploy da noss aplicacao, podemos executar o comando:
+
+terraform apply
+
+para provisionar os recursos feitos depois do upload de imagem do docker para o ecr
+e com tudo provisionado iremos executar o comando:
+
+aws elasticbeanstalk update-environment --environment-name env-prod --version-label env-prod 
+
+o mesmo ira executar uma atualizacao do nosso dockerrun.aws.json, e ira colocar 
+de fato nossa aplicacao no ar para podermos acessar.
+
+Nesta aula vimos:
+O que é o Dockerrum.aws.json e como criá-lo, com auxílio da documentação;
+
+Como colocar uma imagem no ECR, utilizando o comando fornecido pela própria 
+AWS para preparar e fazer o upload da nossa imagem;
+
+A criação de um bucket e como colocar um arquivo dentro desse bucket através do 
+Terraform, já verificando se houve alguma atualização nesse arquivo;
+
+Como criar uma versão da nossa aplicação do Elastic Beanstalk utilizando o 
+Terraform, que é uma parte essencial para o funcionamento do Elastic Beanstalk;
+
+Como fazer o deploy da nova versão do Elastic Beanstalk, e assim cadastrá-la no 
+nosso ambiente.
